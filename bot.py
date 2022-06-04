@@ -119,9 +119,9 @@ if __name__ == "__main__":
     """
     This will automatically load slash commands and normal commands located in their respective folder.
     
-    If you want to remove slash commands, which is not recommended due to the Message Intent being a privileged intent, you can remove the loading of slash commands below.
+    If you want to remove slash commands, which is not recommended due to the Message Intent being a privileged intent, 
+    you can remove the loading of slash commands below.
     """
-    load_commands("slash")
     load_commands("normal")
 
 
