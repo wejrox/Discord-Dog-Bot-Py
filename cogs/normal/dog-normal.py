@@ -216,6 +216,9 @@ class Dog(commands.Cog, name="dog-slash"):
             embed = disnake.Embed(description=dog_act.create_updated_dog_act_message(),
                                   colour=0x9C84EF)
             choices = DogChoice(dog_act)
+
+            # Initialise the message if required, otherwise update it to match the changes made by the most recent
+            # interaction.
             if message is None:
                 message = await context.send(embed=embed, view=choices)
 
@@ -224,13 +227,13 @@ class Dog(commands.Cog, name="dog-slash"):
             else:
                 await message.edit(embed=embed, view=choices)
 
-            # Don't do anything until an outcome is reached.
+            # Don't do anything until another interaction occurs.
             await choices.wait()
 
         embed = disnake.Embed(description=dog_act.create_outcome_message())
-        print(dog_act.create_detailed_outcome_message())
-
         await message.edit(embed=embed, view=None)
+
+        print(dog_act.create_detailed_outcome_message())
 
 
 # And then we finally add the cog to the bot so that it can load, unload, reload and use it's content.
