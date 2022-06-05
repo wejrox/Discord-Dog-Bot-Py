@@ -76,6 +76,7 @@ class DogAct:
         """
         return (f"Whoah there {self.reporter.mention}, that's a big claim!\n"
                 f"Who agrees that {self.target.mention} was really a dog for '{self.allegation}'?\n"
+                f"Required votes: {self.required_votes}\n"
                 f"Current votes: Guilty - {len(self.yes_votes)}, Not Guilty - {len(self.no_votes)}")
 
     def create_outcome_message(self) -> str:
@@ -86,8 +87,10 @@ class DogAct:
         """
         if self.vote_outcome():
             return f"{self.target.mention} has been found guilty of being a dog for '{self.allegation}'!"
+        elif self.timed_out:
+            return f"{self.target.mention} has been found innocent due to lack of voter participation!"
         else:
-            return f"{self.target.mention} is innocent! Shame on {self.reporter.mention}"
+            return f"{self.target.mention} has been found innocent! Shame on {self.reporter.mention}"
 
     def create_detailed_outcome_message(self) -> str:
         """
@@ -101,10 +104,10 @@ class DogAct:
 
         guilty_voters: list[str] = list(map(get_voter_name, self.yes_votes))
         not_guilty_voters: list[str] = list(map(get_voter_name, self.no_votes))
+
         return (f"Dog act finalised. "
                 f"Verdict: {self.create_outcome_message()}. "
-                f"Guilty voters: {guilty_voters}, Not guilty voters: {not_guilty_voters} "
-                f"Trial timed out? {self.timed_out}")
+                f"Guilty voters: {guilty_voters}, Not guilty voters: {not_guilty_voters}")
 
     def _clear_votes_for_author(self, author: Member) -> None:
         """
@@ -163,7 +166,7 @@ class DogChoice(disnake.ui.View):
         self.dog_act.add_new_no_vote(interaction.author)
         self.stop()
 
-    def on_timeout(self) -> None:
+    async def on_timeout(self) -> None:
         """
         Overrides what to do when the view times out.
         On Timeout, the dog act is updated, and we cancel waiting.
