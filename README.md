@@ -44,6 +44,9 @@ Slash commands can take **some hours** to get registered on guilds, so if you wa
 the `guild_ids` parameter in the command decorator so that it gets registered instantly. Example:
 
 ```py
+from disnake.ext import commands
+
+
 @commands.slash_command(
     name="command",
     description="Command description",
@@ -82,13 +85,13 @@ needed things to edit.
 
 Here is an explanation of what everything is:
 
-| Variable                  | What it is                                                            |
-| ------------------------- | ----------------------------------------------------------------------|
-| YOUR_BOT_PREFIX_HERE      | The prefix you want to use for normal commands                        |
-| YOUR_BOT_TOKEN_HERE       | The token of your bot                                                 |
-| YOUR_BOT_PERMISSIONS_HERE | The permissions integer your bot needs when it gets invited           |
-| YOUR_APPLICATION_ID_HERE  | The application ID of your bot                                        |
-| OWNERS                    | The user ID of all the bot owners                                     |
+| Variable                  | What it is                                                  |
+|---------------------------|-------------------------------------------------------------|
+| YOUR_BOT_PREFIX_HERE      | The prefix you want to use for normal commands              |
+| YOUR_BOT_TOKEN_HERE       | The token of your bot                                       |
+| YOUR_BOT_PERMISSIONS_HERE | The permissions integer your bot needs when it gets invited |
+| YOUR_APPLICATION_ID_HERE  | The application ID of your bot                              |
+| OWNERS                    | The user ID of all the bot owners                           |
 
 In the [blacklist](blacklist.json) file you now can add IDs (as integers) in the `ids` list.
 
@@ -115,6 +118,7 @@ or eventually
 ```
 python3.x bot.py
 ```
+
 Replace `x` with the version of Python you have installed.
 
 <br>
