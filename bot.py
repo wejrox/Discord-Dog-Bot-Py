@@ -5,26 +5,59 @@ This is a template to create your own discord bot in python.
 
 Version: 4.1
 """
-
 import json
 import os
 import platform
 import random
-import sys
+from dataclasses import dataclass
 
 import disnake
 from disnake import ApplicationCommandInteraction
 from disnake.ext import tasks, commands
-from disnake.ext.commands import Bot
+from disnake.ext.commands import Bot, DefaultHelpCommand
 from disnake.ext.commands import Context
 
 import exceptions
 
+
+@dataclass
+class Config:
+    """
+    Global configuration for the bot. This is attached to the bot once it's created, and accessible through context.
+    """
+    prefix: str  #: Prefix that users should use to execute commands.
+    token: str  #: Secret token for the bot to use when authenticating with Discord.
+    permissions: str  #: Permissions integer representing required permissions the bot needs on the server. UNUSED.
+    application_id: str  #: Developer application that this bot belongs to. UNUSED.
+    owners: list[int]  #: Unique user IDs of Discord users that have ownership over the bot.
+
+
+config: Config
+
 if not os.path.isfile("config.json"):
-    sys.exit("'config.json' not found! Please add it and try again.")
+    print("'config.json' not found, attempting to source using environment variables...")
+
+
+    def parse_owner_ids(owners: str) -> list[int]:
+        """
+        Splits the incoming string on comma and transforms it into integers to match what our :class:`Config` requires.
+
+        :param owners: Comma separated string of Discord owner IDs.
+        :return: A list of the owners, each represented as an int.
+        """
+        owners_split = owners.split(",")
+        return list(map(lambda owner: int(owner), owners_split))
+
+
+    config = Config(prefix=os.environ.get("BOT_PREFIX"),
+                    token=os.environ.get("BOT_TOKEN"),
+                    permissions=os.environ.get("BOT_PERMISSIONS"),
+                    application_id=os.environ.get("BOT_APPLICATION_ID"),
+                    owners=parse_owner_ids(os.environ.get("BOT_OWNERS")))
 else:
     with open("config.json") as file:
-        config = json.load(file)
+        # Load in the json file as an object, then spread the resultant fields into the Config constructor.
+        config = Config(**json.load(file))
 
 """	
 Setup bot intents (events restrictions)
@@ -69,16 +102,9 @@ If you want to use prefix commands, enable the intent below in the Discord devel
 """
 intents.message_content = True
 
-bot = Bot(command_prefix=commands.when_mentioned_or(config["prefix"]), intents=intents, help_command=None)
-
-"""
-Create a bot variable to access the config file in cogs so that you don't need to import it every time.
-
-The config is available using the following code:
-- bot.config # In this file
-- self.bot.config # In cogs
-"""
-bot.config = config
+bot = Bot(command_prefix=commands.when_mentioned_or(config.prefix), intents=intents,
+          help_command=DefaultHelpCommand(width=120),
+          reload=True, token=config.token, owner_ids=config.owners)
 
 
 @bot.event
@@ -229,4 +255,4 @@ async def on_command_error(context: Context, error) -> None:
 
 
 # Run the bot with the token
-bot.run(config["token"])
+bot.run(config.token)
