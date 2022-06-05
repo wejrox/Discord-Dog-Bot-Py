@@ -95,7 +95,7 @@ class RockPaperScissorsView(disnake.ui.View):
         self.add_item(RockPaperScissors())
 
 
-class Fun(commands.Cog, name="fun-normal"):
+class Fun(commands.Cog, name="fun"):
     def __init__(self, bot):
         self.bot = bot
 
