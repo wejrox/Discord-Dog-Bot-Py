@@ -15,13 +15,14 @@ from disnake.ext.commands import Context
 from helpers import json_manager, checks
 
 
-class Owner(commands.Cog, name="owner-normal"):
+class Owner(commands.Cog, name="owner"):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(
         name="shutdown",
         description="Make the bot shutdown.",
+        hidden=True
     )
     @checks.is_owner()
     async def shutdown(self, context: Context):
@@ -38,6 +39,7 @@ class Owner(commands.Cog, name="owner-normal"):
     @commands.command(
         name="say",
         description="The bot will say anything you want.",
+        hidden=True
     )
     @checks.is_owner()
     async def say(self, context: Context, *, message: str):
@@ -49,6 +51,7 @@ class Owner(commands.Cog, name="owner-normal"):
     @commands.command(
         name="embed",
         description="The bot will say anything you want, but within embeds.",
+        hidden=True
     )
     @checks.is_owner()
     async def embed(self, context: Context, *, message: str):
@@ -62,7 +65,8 @@ class Owner(commands.Cog, name="owner-normal"):
         await context.send(embed=embed)
 
     @commands.group(
-        name="blacklist"
+        name="blacklist",
+        hidden=True
     )
     async def blacklist(self, context: Context):
         """
@@ -79,7 +83,8 @@ class Owner(commands.Cog, name="owner-normal"):
             await context.send(embed=embed)
 
     @blacklist.command(
-        name="add"
+        name="add",
+        hidden=True
     )
     async def blacklist_add(self, context: Context, member: disnake.Member = None):
         """
@@ -117,7 +122,8 @@ class Owner(commands.Cog, name="owner-normal"):
             await context.send(embed=embed)
 
     @blacklist.command(
-        name="remove"
+        name="remove",
+        hidden=True
     )
     async def blacklist_remove(self, context, member: disnake.Member = None):
         """

@@ -13,13 +13,14 @@ from disnake.ext.commands import Context
 from helpers import checks
 
 
-class Moderation(commands.Cog, name="moderation-normal"):
+class Moderation(commands.Cog, name="moderation"):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(
         name="kick",
         description="Kick a user out of the server.",
+        hidden=True
     )
     @commands.has_permissions(kick_members=True)
     @checks.not_blacklisted()
@@ -68,6 +69,7 @@ class Moderation(commands.Cog, name="moderation-normal"):
     @commands.command(
         name="nick",
         description="Change the nickname of a user on a server.",
+        hidden=True
     )
     @commands.has_permissions(manage_nicknames=True)
     @checks.not_blacklisted()
@@ -97,6 +99,7 @@ class Moderation(commands.Cog, name="moderation-normal"):
     @commands.command(
         name="ban",
         description="Bans a user from the server.",
+        hidden=True
     )
     @commands.has_permissions(ban_members=True)
     @checks.not_blacklisted()
@@ -143,6 +146,7 @@ class Moderation(commands.Cog, name="moderation-normal"):
     @commands.command(
         name="warn",
         description="Warns a user in the server.",
+        hidden=True
     )
     @commands.has_permissions(manage_messages=True)
     @checks.not_blacklisted()
@@ -172,6 +176,7 @@ class Moderation(commands.Cog, name="moderation-normal"):
     @commands.command(
         name="purge",
         description="Delete a number of messages.",
+        hidden=True
     )
     @commands.has_guild_permissions(manage_messages=True)
     @checks.not_blacklisted()
@@ -209,7 +214,8 @@ class Moderation(commands.Cog, name="moderation-normal"):
 
     @commands.command(
         name="hackban",
-        description="Bans a user without the user having to be in the server."
+        description="Bans a user without the user having to be in the server.",
+        hidden=True
     )
     async def hackban(self, context: Context, user_id: int, *, reason: str) -> None:
         """
@@ -234,7 +240,8 @@ class Moderation(commands.Cog, name="moderation-normal"):
         except:
             embed = disnake.Embed(
                 title="Error!",
-                description="An error occurred while trying to ban the user. Make sure ID is an existing ID that belongs to a user.",
+                description="An error occurred while trying to ban the user. "
+                            "Make sure ID is an existing ID that belongs to a user.",
                 color=0xE02B2B
             )
             await context.send(embed=embed)

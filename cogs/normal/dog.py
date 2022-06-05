@@ -174,7 +174,7 @@ class DogChoice(disnake.ui.View):
         self.stop()
 
 
-class Dog(commands.Cog, name="dog-slash"):
+class Dog(commands.Cog, name="dog"):
     """
     Commands for users to interact with the dogging framework.
     Users can mark targets as dogs, giving an optional reason for why it is true.
@@ -195,7 +195,11 @@ class Dog(commands.Cog, name="dog-slash"):
     async def dog(self, context: Context,
                   target: Member, *, reason: str = "being a dog, idk") -> None:
         """
-        Reports a target user for dogging, with a provided reason. Trial by Jury dictates the outcome
+        Tag a user and (optionally) provide a reason they should be found guilty of being a dog.
+
+        Reports a user for dogging, with an optionally provided reason.
+        Trial by Jury dictates the outcome, and requires at least 2 votes in either direction.
+        If the trial goes for more than 5 minutes, the defendant is presumed innocent by lack of participation.
 
         :param target: The user who dogged.
         :param context: The application command interaction.
