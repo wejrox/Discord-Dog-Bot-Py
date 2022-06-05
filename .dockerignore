@@ -1,0 +1,6 @@
+venv
+.github
+.gitignore
+config.json
+blacklist.json
+*.md
