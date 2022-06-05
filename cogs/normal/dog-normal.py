@@ -1,4 +1,3 @@
-# Here we name the cog and create a new class for the cog.
 from typing import Union
 
 import disnake
