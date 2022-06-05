@@ -2,4 +2,18 @@ services:
   bot:
     build: .
     volumes:
+      # A filled in version of the config file template in this repository root.
+      # Can't be committed or put into the docker image for security reasons.
       - ./config.json:/opt/python-bot/config.json
+      # Persistent database folder for any file based databases we may use.
+      - database:/opt/python-bot/database:rw
+    environment:
+      BOT_PREFIX: !
+      BOT_TOKEN: UNSET_TOKEN
+      BOT_PERMISSIONS: UNSET_PERMISSIONS
+      BOT_APPLICATION_ID: UNSET_APPLICATION
+      BOT_OWNERS: UNSET_OWNERS,SEPARATED_BY_COMMA
+
+# Create a volume that will persist through restarts for our database.
+volumes:
+  database:

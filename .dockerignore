@@ -4,3 +4,6 @@ venv
 config.json
 blacklist.json
 *.md
+
+# Generated at runtime, and an external volume for this deployment.
+database
