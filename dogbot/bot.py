@@ -94,6 +94,23 @@ bot = Bot(command_prefix=commands.when_mentioned_or(config.prefix), intents=inte
           help_command=DefaultHelpCommand(width=120),
           token=config.token, owner_ids=config.owners)
 
+if __name__ == "__main__":
+    """
+    This will automatically load commands located in their respective folder.
+
+    If you want to remove slash commands, which is not recommended due to the Message Intent being a privileged intent, 
+    you can remove the loading of slash commands below.
+    """
+    for command_file in os.listdir(os.path.join(package_dir, "cogs")):
+        if command_file.endswith(".py"):
+            command_group = command_file[:-3]
+            try:
+                bot.load_extension(f"cogs.{command_group}")
+                print(f"Loaded extension '{command_group}'")
+            except Exception as e:
+                exception = f"{type(e).__name__}: {e}"
+                print(f"Failed to load extension {command_group}\n{exception}")
+
 
 @bot.event
 async def on_ready() -> None:
@@ -115,28 +132,6 @@ async def status_task() -> None:
     """
     statuses = ["in the doghouse."]
     await bot.change_presence(activity=disnake.Game(random.choice(statuses)))
-
-
-def load_commands(command_type: str) -> None:
-    for command_file in os.listdir(os.path.join(package_dir, "cogs", command_type)):
-        if command_file.endswith(".py"):
-            extension = command_file[:-3]
-            try:
-                bot.load_extension(f"cogs.{command_type}.{extension}")
-                print(f"Loaded extension '{extension}'")
-            except Exception as e:
-                exception = f"{type(e).__name__}: {e}"
-                print(f"Failed to load extension {extension}\n{exception}")
-
-
-if __name__ == "__main__":
-    """
-    This will automatically load commands located in their respective folder.
-    
-    If you want to remove slash commands, which is not recommended due to the Message Intent being a privileged intent, 
-    you can remove the loading of slash commands below.
-    """
-    load_commands("normal")
 
 
 @bot.event
