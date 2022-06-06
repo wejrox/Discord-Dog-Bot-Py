@@ -21,9 +21,10 @@ from exceptions.permissions import UserBlacklisted
 from file_references import config_location, package_dir
 
 config: Config
-
 if not os.path.isfile(config_location) or os.environ.get("BOT_ENV_CONFIG"):
-    print(f"'{config_location}' not found, attempting to source using environment variables...")
+    if not os.path.isfile(config_location):
+        print(f"'{config_location}' not found.")
+    print(f"Attempting to source config using environment variables.")
 
 
     def parse_owner_ids(owners: str) -> list[int]:
@@ -47,47 +48,7 @@ else:
         # Load in the json file as an object, then spread the resultant fields into the Config constructor.
         config = Config(**json.load(file))
 
-"""	
-Setup bot intents (events restrictions)
-For more information about intents, please go to the following websites:
-https://docs.disnake.dev/en/latest/intents.html
-https://docs.disnake.dev/en/latest/intents.html#privileged-intents
-
-
-Default Intents:
-intents.bans = True
-intents.dm_messages = True
-intents.dm_reactions = True
-intents.dm_typing = True
-intents.emojis = True
-intents.emojis_and_stickers = True
-intents.guild_messages = True
-intents.guild_reactions = True
-intents.guild_scheduled_events = True
-intents.guild_typing = True
-intents.guilds = True
-intents.integrations = True
-intents.invites = True
-intents.messages = True # `message_content` is required to get the content of the messages
-intents.reactions = True
-intents.typing = True
-intents.voice_states = True
-intents.webhooks = True
-
-Privileged Intents (Needs to be enabled on developer portal of Discord), please use them only if you need them:
-intents.members = True
-intents.message_content = True
-intents.presences = True
-"""
-
 intents = disnake.Intents.default()
-
-"""
-Remove this if you don't want to use prefix (normal) commands.
-It is recommended to use slash commands and therefore not use prefix commands.
-
-If you want to use prefix commands, enable the intent below in the Discord developer portal.
-"""
 intents.message_content = True
 
 bot = Bot(command_prefix=commands.when_mentioned_or(config.prefix), intents=intents,
