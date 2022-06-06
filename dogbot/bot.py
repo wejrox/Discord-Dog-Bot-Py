@@ -21,7 +21,7 @@ from exceptions.permissions import UserBlacklisted
 from file_references import config_location, package_dir
 
 config: Config
-if not os.path.isfile(config_location) or os.environ.get("BOT_ENV_CONFIG"):
+if not os.path.isfile(config_location) or os.environ.get("BOT_SOURCE_CONFIG_FROM_ENV"):
     if not os.path.isfile(config_location):
         print(f"'{config_location}' not found.")
     print(f"Attempting to source config using environment variables.")
