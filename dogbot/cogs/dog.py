@@ -70,7 +70,8 @@ async def send_top_dogs(context: Context, tag_dogs: bool) -> None:
     """
     top_dogs: list[str] = []
     for dog_act in DogAct.select(DogAct.target, fn.Count(DogAct.target).alias('count')).where(
-            DogAct.found_guilty == 1).group_by(DogAct.target).order_by('count desc').limit(3):
+            (DogAct.guild_id == context.guild.id) & (DogAct.found_guilty == 1)).group_by(DogAct.target).order_by(
+        'count desc').limit(3):
         top_dog = await context.guild.get_or_fetch_member(dog_act.target)
         if tag_dogs:
             top_dogs.append(top_dog.mention)
@@ -127,7 +128,7 @@ class Dog(commands.Cog, name="dog"):
 
         # Initialise the dog act, recording details about the message.
         dog_act = DogAct.create(reporter=context.author.id, target=member.id, allegation=reason,
-                                required_votes=self.votes_to_complete)
+                                guild_id=context.guild.id, required_votes=self.votes_to_complete)
 
         # Continue waiting for user input until an outcome has been reached.
         message = None
@@ -193,9 +194,13 @@ class Dog(commands.Cog, name="dog"):
 
         history: list[str] = []
         total_guilty_acts = 0
-        for dog_act in DogAct.select().where(DogAct.target == tagged_user.id).group_by(DogAct.target).order_by(
-                DogAct.act_id.desc()).limit(normalised_limit):
+        for dog_act in DogAct.select().where(
+                (DogAct.guild_id == context.guild.id) & (DogAct.target == tagged_user.id)).group_by(
+            DogAct.target).order_by(
+            DogAct.act_id.desc()).limit(normalised_limit):
             history.append(dog_act.create_history_summary())
+
+            # It's fun to know how many times someone has been a dog!
             if dog_act.found_guilty:
                 total_guilty_acts += 1
 

@@ -14,6 +14,7 @@ class DogAct(BaseModel):
     """
     act_id = AutoField()
     message_id: int = IntegerField(null=True, help_text="Unique identifier for the bot message that this relates to.")
+    guild_id: int = IntegerField(help_text="Guild (discord server) that this act occurred within.")
     reporter: int = IntegerField(help_text="Who it was that filed this report against the target.")
     target: int = IntegerField(help_text="The user accused of being a dog.")
     allegation: str = CharField(
