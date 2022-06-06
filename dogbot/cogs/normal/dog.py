@@ -2,6 +2,7 @@ import disnake
 from disnake import Member
 from disnake.ext import commands
 from disnake.ext.commands import Context
+from peewee import fn
 
 from orm.database import dog_bot_database
 from orm.models.dog_act import DogAct
@@ -59,6 +60,33 @@ class DogChoice(disnake.ui.View):
         """
         self.dog_act.time_out()
         self.stop()
+
+
+async def send_top_dogs(context: Context, tag_dogs: bool) -> None:
+    """
+    Generates and sends the dog leaderboard for the current standings.
+    :param context: Discord context for sending messages and retrieving member details.
+    :param tag_dogs: Whether to explicitly tag the dogs in the message.
+    """
+    top_dogs: list[str] = []
+    for dog_act in DogAct.select(DogAct.target, fn.Count(DogAct.target).alias('count')).where(
+            DogAct.found_guilty == 1).group_by(DogAct.target).order_by('count desc').limit(3):
+        top_dog = await context.guild.get_or_fetch_member(dog_act.target)
+        if tag_dogs:
+            top_dogs.append(top_dog.mention)
+        else:
+            top_dogs.append(top_dog.name)
+
+    message_rows = []
+    if len(top_dogs) > 0:
+        message_rows.append(f"**Worst Dogger**\n{top_dogs[0]}")
+    if len(top_dogs) > 1:
+        message_rows.append(f"**Still a dog**\n{top_dogs[1]}")
+    if len(top_dogs) > 2:
+        message_rows.append(f"**Also a dog**\n{top_dogs[2]}")
+
+    embed = disnake.Embed(title=":dog: Worst 3 Dogs :dog:", description='\n'.join(message_rows), colour=0x9C84EF)
+    await context.send(embed=embed)
 
 
 class Dog(commands.Cog, name="dog"):
@@ -124,6 +152,28 @@ class Dog(commands.Cog, name="dog"):
         await message.edit(embed=embed, view=None)
 
         print(await dog_act.create_detailed_outcome_message(context))
+
+    @commands.command(
+        name="tagdogs",
+        description="Tags the top 3 dogs on the server, and how many times they've dogged. "
+                    "Rate limited to once per day."
+    )
+    @commands.cooldown(1, 1 * 24 * 60 * 60, commands.BucketType.user)
+    async def tagdogs(self, context: Context) -> None:
+        """
+        Post a message tagging the worst 3 dog offenders. Can only be used once per day, per person.
+        """
+        await send_top_dogs(context, True)
+
+    @commands.command(
+        name="dogs",
+        description="Pastes the top 3 dogs on the server, and how many times they've dogged."
+    )
+    async def dogs(self, context: Context) -> None:
+        """
+        Post a message listing the worst 3 dog offenders.
+        """
+        await send_top_dogs(context, False)
 
 
 def setup(bot):

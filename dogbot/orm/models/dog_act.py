@@ -92,9 +92,11 @@ class DogAct(BaseModel):
         reporter_member = await context.guild.get_or_fetch_member(self.reporter)
         target_member = await context.guild.get_or_fetch_member(self.target)
         return (f"Whoah there {reporter_member.mention}, that's a big claim!\n"
-                f"Who agrees that {target_member.mention} was really a dog for '{self.allegation}'?\n"
+                f"Who agrees that {target_member.mention} was really a :dog: for '{self.allegation}'?\n"
                 f"Votes required on one side for a verdict: {self.required_votes}\n"
-                f"Current votes: Guilty - {len(self.yes_votes)}, Not Guilty - {len(self.no_votes)}")
+                f"Current votes: "
+                f":dog: Guilty - {len(self.yes_votes)}, "
+                f":no_entry_sign: Not Guilty - {len(self.no_votes)}")
 
     async def create_outcome_message(self, context: Context) -> str:
         """
@@ -105,7 +107,7 @@ class DogAct(BaseModel):
         reporter_member = await context.guild.get_or_fetch_member(self.reporter)
         target_member = await context.guild.get_or_fetch_member(self.target)
         if self.found_guilty:
-            return f"{target_member.mention} has been found guilty of being a dog for '{self.allegation}'!"
+            return f"{target_member.mention} has been found guilty of being a :dog: for '{self.allegation}'!"
         elif self.timed_out:
             return f"{target_member.mention} has been found innocent due to lack of voter participation!"
         else:
