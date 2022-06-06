@@ -133,6 +133,23 @@ class DogAct(BaseModel):
                 f"Verdict: {await self.create_outcome_message(context)}. "
                 f"Guilty voters: {guilty_voters}, Not guilty voters: {not_guilty_voters}")
 
+    def create_history_summary(self) -> str:
+        """
+        Creates a historical summary for this dog act, to show what the main outcomes of the act were.
+
+        :return: A summary of the outcome of this dog act.
+        """
+        if self.found_guilty:
+            verdict = "Guilty"
+        elif self.timed_out:
+            verdict = "Timed Out"
+        else:
+            verdict = "Not Guilty"
+        return (f"**Verdict**: {verdict}"
+                f", **Guilty votes**: {len(self.yes_votes)}"
+                f", **Not Guilty votes**: {len(self.no_votes)}"
+                f", **Allegation**: {self.allegation}")
+
     def _clear_votes_for_author(self, author: int) -> None:
         """
         Removes all votes previously made by the provided author from any relevant lists.

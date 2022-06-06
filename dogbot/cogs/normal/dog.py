@@ -81,8 +81,10 @@ async def send_top_dogs(context: Context, tag_dogs: bool) -> None:
     if len(top_dogs) > 0:
         message_rows.append(f"**Worst Dogger**\n{top_dogs[0]}")
     if len(top_dogs) > 1:
+        message_rows.append("")
         message_rows.append(f"**Still a dog**\n{top_dogs[1]}")
     if len(top_dogs) > 2:
+        message_rows.append("")
         message_rows.append(f"**Also a dog**\n{top_dogs[2]}")
 
     embed = disnake.Embed(title=":dog: Worst 3 Dogs :dog:", description='\n'.join(message_rows), colour=0x9C84EF)
@@ -96,7 +98,7 @@ class Dog(commands.Cog, name="dog"):
     If enough other users agree that the target did in fact dog as outlined, the target will be branded a dog and have
     a mark added against their name.
     """
-    votes_to_complete: int = 1
+    votes_to_complete: int = 5
 
     def __init__(self, bot):
         dog_bot_database.connect()
@@ -109,7 +111,7 @@ class Dog(commands.Cog, name="dog"):
         description="Reports someone for dogging."
     )
     async def dog(self, context: Context,
-                  target: Member, *, reason: str = "being a dog, idk") -> None:
+                  tagged_user: Member, *, reason: str = "being a dog, idk") -> None:
         """
         Tag a user and (optionally) provide a reason they should be found guilty of being a dog.
 
@@ -117,11 +119,11 @@ class Dog(commands.Cog, name="dog"):
         Trial by Jury dictates the outcome, and requires at least 2 votes in either direction.
         If the trial goes for more than 5 minutes, the defendant is presumed innocent by lack of participation.
 
-        :param target: The user who dogged.
+        :param tagged_user: The user who allegedly dogged.
         :param context: The application command interaction.
         :param reason: Why what they did was considered a dog move.
         """
-        member = await context.guild.get_or_fetch_member(target.id)
+        member = await context.guild.get_or_fetch_member(tagged_user.id)
 
         # Initialise the dog act, recording details about the message.
         dog_act = DogAct.create(reporter=context.author.id, target=member.id, allegation=reason,
@@ -174,6 +176,35 @@ class Dog(commands.Cog, name="dog"):
         Post a message listing the worst 3 dog offenders.
         """
         await send_top_dogs(context, False)
+
+    @commands.command(
+        name="doghistory",
+        description="Shows the dog act history for the provided Member."
+    )
+    async def dogs(self, context: Context, tagged_user: Member, limit: int = 10) -> None:
+        """
+        Post a message listing the accusations made of the provided Member, with reasons and outcomes.
+        Optionally, the maximum number of records can be specified.
+        """
+        if limit > 30:
+            normalised_limit = 30
+        else:
+            normalised_limit = limit
+
+        history: list[str] = []
+        total_guilty_acts = 0
+        for dog_act in DogAct.select().where(DogAct.target == tagged_user.id).group_by(DogAct.target).order_by(
+                DogAct.act_id.desc()).limit(normalised_limit):
+            history.append(dog_act.create_history_summary())
+            if dog_act.found_guilty:
+                total_guilty_acts += 1
+
+        embed = disnake.Embed(title=f"Dog history for {tagged_user.name}",
+                              description=f"Total dog acts: **{total_guilty_acts}**\n" +
+                                          f"------------------\n" +
+                                          '\n'.join(history),
+                              colour=0x9C84EF)
+        await context.send(embed=embed)
 
 
 def setup(bot):
