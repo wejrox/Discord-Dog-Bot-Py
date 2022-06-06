@@ -1,9 +1,9 @@
 venv
 .github
 .gitignore
-config.json
+dogbot/config.json
 blacklist.json
 *.md
 
 # Generated at runtime, and an external volume for this deployment.
-database
+dogbot/database

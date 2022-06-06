@@ -9,7 +9,6 @@ import json
 import os
 import platform
 import random
-from dataclasses import dataclass
 
 import disnake
 from disnake import ApplicationCommandInteraction
@@ -17,25 +16,14 @@ from disnake.ext import tasks, commands
 from disnake.ext.commands import Bot, DefaultHelpCommand
 from disnake.ext.commands import Context
 
-import exceptions
-
-
-@dataclass
-class Config:
-    """
-    Global configuration for the bot. This is attached to the bot once it's created, and accessible through context.
-    """
-    prefix: str  #: Prefix that users should use to execute commands.
-    token: str  #: Secret token for the bot to use when authenticating with Discord.
-    permissions: str  #: Permissions integer representing required permissions the bot needs on the server. UNUSED.
-    application_id: str  #: Developer application that this bot belongs to. UNUSED.
-    owners: list[int]  #: Unique user IDs of Discord users that have ownership over the bot.
-
+from config import Config
+from exceptions.permissions import UserBlacklisted
+from file_references import config_location, package_dir
 
 config: Config
 
-if not os.path.isfile("config.json"):
-    print("'config.json' not found, attempting to source using environment variables...")
+if not os.path.isfile(config_location):
+    print(f"'{config_location}' not found, attempting to source using environment variables...")
 
 
     def parse_owner_ids(owners: str) -> list[int]:
@@ -55,7 +43,7 @@ if not os.path.isfile("config.json"):
                     application_id=os.environ.get("BOT_APPLICATION_ID"),
                     owners=parse_owner_ids(os.environ.get("BOT_OWNERS")))
 else:
-    with open("config.json") as file:
+    with open(config_location) as file:
         # Load in the json file as an object, then spread the resultant fields into the Config constructor.
         config = Config(**json.load(file))
 
@@ -104,7 +92,7 @@ intents.message_content = True
 
 bot = Bot(command_prefix=commands.when_mentioned_or(config.prefix), intents=intents,
           help_command=DefaultHelpCommand(width=120),
-          reload=True, token=config.token, owner_ids=config.owners)
+          token=config.token, owner_ids=config.owners)
 
 
 @bot.event
@@ -130,9 +118,9 @@ async def status_task() -> None:
 
 
 def load_commands(command_type: str) -> None:
-    for file in os.listdir(f"./cogs/{command_type}"):
-        if file.endswith(".py"):
-            extension = file[:-3]
+    for command_file in os.listdir(os.path.join(package_dir, "cogs", command_type)):
+        if command_file.endswith(".py"):
+            extension = command_file[:-3]
             try:
                 bot.load_extension(f"cogs.{command_type}.{extension}")
                 print(f"Loaded extension '{extension}'")
@@ -143,7 +131,7 @@ def load_commands(command_type: str) -> None:
 
 if __name__ == "__main__":
     """
-    This will automatically load slash commands and normal commands located in their respective folder.
+    This will automatically load commands located in their respective folder.
     
     If you want to remove slash commands, which is not recommended due to the Message Intent being a privileged intent, 
     you can remove the loading of slash commands below.
@@ -168,8 +156,9 @@ async def on_slash_command(interaction: ApplicationCommandInteraction) -> None:
     The code in this event is executed every time a slash command has been *successfully* executed
     :param interaction: The slash command that has been executed.
     """
-    print(
-        f"Executed {interaction.data.name} command in {interaction.guild.name} (ID: {interaction.guild.id}) by {interaction.author} (ID: {interaction.author.id})")
+    print(f"Executed {interaction.data.name} command "
+          f"in {interaction.guild.name} (ID: {interaction.guild.id}) "
+          f"by {interaction.author} (ID: {interaction.author.id})")
 
 
 @bot.event
@@ -179,7 +168,7 @@ async def on_slash_command_error(interaction: ApplicationCommandInteraction, err
     :param interaction: The slash command that failed executing.
     :param error: The error that has been faced.
     """
-    if isinstance(error, exceptions.UserBlacklisted):
+    if isinstance(error, UserBlacklisted):
         """
         The code here will only execute if the error is an instance of 'UserBlacklisted', which can occur when using
         the @checks.is_owner() check in your command, or you can raise the error by yourself.
@@ -214,8 +203,9 @@ async def on_command_completion(context: Context) -> None:
     full_command_name = context.command.qualified_name
     split = full_command_name.split(" ")
     executed_command = str(split[0])
-    print(
-        f"Executed {executed_command} command in {context.guild.name} (ID: {context.message.guild.id}) by {context.message.author} (ID: {context.message.author.id})")
+    print(f"Executed {executed_command} command "
+          f"in {context.guild.name} (ID: {context.message.guild.id}) "
+          f"by {context.message.author} (ID: {context.message.author.id})")
 
 
 @bot.event
@@ -231,15 +221,19 @@ async def on_command_error(context: Context, error) -> None:
         hours = hours % 24
         embed = disnake.Embed(
             title="Hey, please slow down!",
-            description=f"You can use this command again in {f'{round(hours)} hours' if round(hours) > 0 else ''} {f'{round(minutes)} minutes' if round(minutes) > 0 else ''} {f'{round(seconds)} seconds' if round(seconds) > 0 else ''}.",
+            description=f"You can use this command again in "
+                        f"{f'{round(hours)} hours' if round(hours) > 0 else ''} "
+                        f"{f'{round(minutes)} minutes' if round(minutes) > 0 else ''} "
+                        f"{f'{round(seconds)} seconds' if round(seconds) > 0 else ''}.",
             color=0xE02B2B
         )
         await context.send(embed=embed)
     elif isinstance(error, commands.MissingPermissions):
         embed = disnake.Embed(
             title="Error!",
-            description="You are missing the permission(s) `" + ", ".join(
-                error.missing_permissions) + "` to execute this command!",
+            description="You are missing the permission(s) `"
+                        f"{', '.join(error.missing_permissions)}"
+                        "` to execute this command!",
             color=0xE02B2B
         )
         await context.send(embed=embed)
@@ -254,5 +248,5 @@ async def on_command_error(context: Context, error) -> None:
     raise error
 
 
-# Run the bot with the token
+# Run the bot with the token.
 bot.run(config.token)

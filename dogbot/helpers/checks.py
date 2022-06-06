@@ -11,7 +11,8 @@ from typing import TypeVar, Callable
 
 from disnake.ext import commands
 
-from exceptions import *
+from exceptions.permissions import UserNotOwner, UserBlacklisted
+from file_references import blacklist_location
 
 T = TypeVar("T")
 
@@ -35,7 +36,7 @@ def not_blacklisted() -> Callable[[T], T]:
     """
 
     async def predicate(context: commands.Context) -> bool:
-        with open("blacklist.json") as file:
+        with open(blacklist_location) as file:
             data = json.load(file)
         if context.author.id in data["ids"]:
             raise UserBlacklisted

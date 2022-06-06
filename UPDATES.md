@@ -6,8 +6,8 @@ Here is the list of all the updates that I made on this template.
 
 * Added the `hackban` command
 * Separated slash commands and normal commands so that you remove one of them more easily
-    * Moved normal commands in [`cogs/normal`](cogs/normal)
-    * Moved slash commands in [`cogs/slash`](cogs/slash)
+    * Moved normal commands in [`cogs/normal`](dogbot/cogs/normal)
+    * Moved slash commands in [`cogs/slash`](dogbot/cogs/slash)
 
 ### Version 4.0.1
 
@@ -85,7 +85,7 @@ Here is the list of all the updates that I made on this template.
 ### Version 2.4
 
 * Added some fun commands
-* Colors are saved in the [config file](config.json) for easier usage
+* Colors are saved in the [config file](dogbot/config.json) for easier usage
 * Cogs are now being loaded automatically
 * Fixed some typos
 
@@ -109,7 +109,7 @@ Here is the list of all the updates that I made on this template.
 
 * Added cogs
 * Added f-strings and removed `.format()`
-* Created [config file](config.json) for easier setup
+* Created [config file](dogbot/config.json) for easier setup
 
 ### Version 1.2
 
