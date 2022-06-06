@@ -1,8 +1,8 @@
 {
   "prefix": "!",
-  "token": "***REMOVED***",
-  "permissions": "***REMOVED***",
-  "application_id": "***REMOVED***",
+  "token": "TOKEN",
+  "permissions": "PERMISSIONS",
+  "application_id": "APPLICATION_ID",
   "owners": [
     111037588680237056,
     113443420432793600
