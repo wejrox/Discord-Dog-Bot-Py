@@ -22,7 +22,7 @@ from file_references import config_location, package_dir
 
 config: Config
 
-if not os.path.isfile(config_location):
+if not os.path.isfile(config_location) or os.environ.get("BOT_ENV_CONFIG"):
     print(f"'{config_location}' not found, attempting to source using environment variables...")
 
 
