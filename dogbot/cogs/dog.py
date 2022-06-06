@@ -136,7 +136,8 @@ class Dog(commands.Cog, name="dog"):
             # Set the embed to the current status of the trial.
             embed = disnake.Embed(description=await dog_act.create_updated_dog_act_message(context),
                                   colour=0x9C84EF)
-            choices = DogChoice(dog_act)
+            # Timeout after an hour (1hr * 60 min * 60 sec).
+            choices = DogChoice(dog_act, timeout_sec=1 * 60 * 60)
 
             # Initialise the message if required, otherwise update it to match the changes made by the most recent
             # interaction.
