@@ -22,12 +22,12 @@ class Choice(disnake.ui.View):
         self.choice = None
 
     @disnake.ui.button(label="Heads", style=disnake.ButtonStyle.blurple)
-    async def confirm(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+    async def confirm(self, button: disnake.ui.Button, _: disnake.MessageInteraction):
         self.choice = button.label.lower()
         self.stop()
 
     @disnake.ui.button(label="Tails", style=disnake.ButtonStyle.blurple)
-    async def cancel(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+    async def cancel(self, button: disnake.ui.Button, _: disnake.MessageInteraction):
         self.choice = button.label.lower()
         self.stop()
 
@@ -109,7 +109,8 @@ class Fun(commands.Cog, name="fun"):
         Get a random fact.
         :param context: The context in which the command has been executed.
         """
-        # This will prevent your bot from stopping everything when doing a web request - see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
+        # This will prevent your bot from stopping everything when doing a web request -
+        # see: https://discordpy.readthedocs.io/en/stable/faq.html#how-do-i-make-a-web-request
         async with aiohttp.ClientSession() as session:
             async with session.get("https://uselessfacts.jsph.pl/random.json?language=en") as request:
                 if request.status == 200:

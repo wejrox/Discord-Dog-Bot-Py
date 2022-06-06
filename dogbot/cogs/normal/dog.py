@@ -30,7 +30,7 @@ class DogChoice(disnake.ui.View):
         self.timeout = timeout_sec
 
     @disnake.ui.button(label="Definitely a dog", style=disnake.ButtonStyle.blurple)
-    async def yes(self, _: disnake.ui.Button, interaction: disnake.MessageInteraction) -> None:
+    async def yes_button(self, _: disnake.ui.Button, interaction: disnake.MessageInteraction) -> None:
         """
         Generates the 'yes' option. Clicking this button causes the clicker to be added to the 'yes' votes list.
         To avoid adding the same user multiple times, their votes are cleared before adding them to the correct list.
@@ -43,7 +43,7 @@ class DogChoice(disnake.ui.View):
         self.stop()
 
     @disnake.ui.button(label="Not a dog", style=disnake.ButtonStyle.blurple)
-    async def no(self, _: disnake.ui.Button, interaction: disnake.MessageInteraction) -> None:
+    async def no_button(self, _: disnake.ui.Button, interaction: disnake.MessageInteraction) -> None:
         """
         Generates the 'no' option. Clicking this button causes the clicker to be added to the 'no' votes list.
 
@@ -161,7 +161,7 @@ class Dog(commands.Cog, name="dog"):
                     "Rate limited to once per day."
     )
     @commands.cooldown(1, 1 * 24 * 60 * 60, commands.BucketType.user)
-    async def tagdogs(self, context: Context) -> None:
+    async def tag_dogs(self, context: Context) -> None:
         """
         Post a message tagging the worst 3 dog offenders. Can only be used once per day, per person.
         """
@@ -181,7 +181,7 @@ class Dog(commands.Cog, name="dog"):
         name="doghistory",
         description="Shows the dog act history for the provided Member."
     )
-    async def dogs(self, context: Context, tagged_user: Member, limit: int = 10) -> None:
+    async def dog_history(self, context: Context, tagged_user: Member, limit: int = 10) -> None:
         """
         Post a message listing the accusations made of the provided Member, with reasons and outcomes.
         Optionally, the maximum number of records can be specified.
@@ -201,7 +201,7 @@ class Dog(commands.Cog, name="dog"):
 
         embed = disnake.Embed(title=f"Dog history for {tagged_user.name}",
                               description=f"Total dog acts: **{total_guilty_acts}**\n" +
-                                          f"------------------\n" +
+                                          "------------------\n" +
                                           '\n'.join(history),
                               colour=0x9C84EF)
         await context.send(embed=embed)
