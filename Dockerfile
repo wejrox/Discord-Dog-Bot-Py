@@ -7,10 +7,10 @@ COPY requirements.txt ./requirements.txt
 RUN python3 -m pip install -r requirements.txt
 
 # Copy in order of least to most likely to change.
-COPY exceptions ./exceptions
-COPY helpers ./helpers
-COPY cogs ./cogs
-COPY bot.py ./bot.py
+COPY dogbot/exceptions ./exceptions
+COPY dogbot/helpers ./helpers
+COPY dogbot/cogs ./cogs
+COPY dogbot/bot.py ./bot.py
 
 # Prefix to use when issuing commands.
 ENV BOT_PREFIX = "UNSET_PREFIX"
