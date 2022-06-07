@@ -4,8 +4,8 @@ from disnake import Member
 from disnake.ext.commands import Context
 from peewee import IntegerField, AutoField, CharField, BooleanField
 
-from orm.fields.repeating_integer_field import RepeatingIntegerField
-from orm.models.base_model import BaseModel
+from dogbot.orm.fields.repeating_integer_field import RepeatingIntegerField
+from dogbot.orm.models.base_model import BaseModel
 
 
 class DogAct(BaseModel):

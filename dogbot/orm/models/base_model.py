@@ -1,6 +1,6 @@
 from peewee import Model
 
-from orm.database import dog_bot_database
+from dogbot.orm.database import dog_bot_database_proxy
 
 
 class BaseModel(Model):
@@ -12,4 +12,4 @@ class BaseModel(Model):
         """
         Tell this model and all child models to use the db defined globally.
         """
-        database = dog_bot_database
+        database = dog_bot_database_proxy

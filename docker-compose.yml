@@ -2,17 +2,24 @@ services:
   bot:
     build: .
     volumes:
-      # A filled in version of the config file template in this repository root.
-      # Can't be committed or put into the docker image for security reasons.
-      - ./config.json:/opt/python-bot/config.json
+      # TODO This should probably be turned into a database table instead.
+      - ./blacklist.json:/opt/python-bot/blacklist.json
       # Persistent database folder for any file based databases we may use.
       - database:/opt/python-bot/database:rw
     environment:
       BOT_PREFIX: !
       BOT_TOKEN: UNSET_TOKEN
-      BOT_PERMISSIONS: UNSET_PERMISSIONS
-      BOT_APPLICATION_ID: UNSET_APPLICATION
-      BOT_OWNERS: UNSET_OWNERS,SEPARATED_BY_COMMA
+      BOT_OWNERS: UNSET_OWNER_IDS SEPARATED_BY_SPACE
+      BOT_DATABASE_FILE_LOCATION: /opt/python-bot/database/dog_bot.db
+      BOT_BLACKLIST_FILE_LOCATION: /opt/python-bot/blacklist.json
+      BOT_CONFIG_FILE_LOCATION: /opt/python-bot/blacklist.json
+    # Use the internal image variables when determining what to pass to the command ($$).
+    command: [ "--prefix", "$$BOT_PREFIX",
+               "--token", "$$BOT_TOKEN",
+               "--owners", "$$BOT_OWNERS",
+               "--database_file_location", "$$BOT_DATABASE_FILE_LOCATION",
+               "--blacklist_file_location", "$$BOT_BLACKLIST_FILE_LOCATION",
+               "--config_file_location", "$$BOT_CONFIG_FILE_LOCATION" ]
 
 # Create a volume that will persist through restarts for our database.
 volumes:

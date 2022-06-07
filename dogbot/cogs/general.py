@@ -14,7 +14,7 @@ from disnake import Member
 from disnake.ext import commands
 from disnake.ext.commands import Context, Bot
 
-from helpers import checks
+from dogbot.helpers import checks
 
 
 class General(commands.Cog, name="general"):

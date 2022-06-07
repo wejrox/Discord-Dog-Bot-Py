@@ -4,8 +4,8 @@ from disnake.ext import commands
 from disnake.ext.commands import Context
 from peewee import fn
 
-from orm.database import dog_bot_database
-from orm.models.dog_act import DogAct
+from dogbot.orm.database import dog_bot_database_proxy
+from dogbot.orm.models.dog_act import DogAct
 
 
 class DogChoice(disnake.ui.View):
@@ -40,6 +40,10 @@ class DogChoice(disnake.ui.View):
         :param interaction: Details about the interaction that occurred with the button.
         """
         self.dog_act.add_new_yes_vote(interaction.author)
+
+        # When a user initiates a click, we need to do something as a result, or they never receive anything back.
+        # Defer prevents them from receiving the 'Interaction failed' message.
+        await interaction.response.defer()
         self.stop()
 
     @disnake.ui.button(label="Not a dog", style=disnake.ButtonStyle.blurple)
@@ -51,6 +55,10 @@ class DogChoice(disnake.ui.View):
         :param interaction: Details about the interaction that occurred with the button.
         """
         self.dog_act.add_new_no_vote(interaction.author)
+
+        # When a user initiates a click, we need to do something as a result, or they never receive anything back.
+        # Defer prevents them from receiving the 'Interaction failed' message.
+        await interaction.response.defer()
         self.stop()
 
     async def on_timeout(self) -> None:
@@ -102,9 +110,9 @@ class Dog(commands.Cog, name="dog"):
     votes_to_complete: int = 5
 
     def __init__(self, bot):
-        dog_bot_database.connect()
-        dog_bot_database.create_tables([DogAct])
-        dog_bot_database.close()
+        dog_bot_database_proxy.connect()
+        dog_bot_database_proxy.create_tables([DogAct])
+        dog_bot_database_proxy.close()
         self.bot = bot
 
     @commands.command(

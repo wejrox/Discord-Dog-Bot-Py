@@ -1,6 +1,5 @@
-from peewee import SqliteDatabase
-
-from file_references import database_location
+from peewee import DatabaseProxy
 
 # Store a reference to the database used by this bot.
-dog_bot_database = SqliteDatabase(database_location)
+# This proxy must be set before it can be used, see the main entrypoint for reference.
+dog_bot_database_proxy = DatabaseProxy()

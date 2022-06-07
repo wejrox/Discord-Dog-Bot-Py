@@ -11,8 +11,7 @@ from typing import TypeVar, Callable
 
 from disnake.ext import commands
 
-from exceptions.permissions import UserNotOwner, UserBlacklisted
-from file_references import blacklist_location
+from dogbot.exceptions.permissions import UserNotOwner, UserBlacklisted
 
 T = TypeVar("T")
 
@@ -23,7 +22,7 @@ def is_owner() -> Callable[[T], T]:
     """
 
     async def predicate(context: commands.Context) -> bool:
-        if context.author.id not in context.bot.owner_ids:
+        if context.author.id not in context.bot.config.owners:
             raise UserNotOwner
         return True
 
@@ -36,7 +35,7 @@ def not_blacklisted() -> Callable[[T], T]:
     """
 
     async def predicate(context: commands.Context) -> bool:
-        with open(blacklist_location) as file:
+        with open(context.bot.config.blacklist_file_location) as file:
             data = json.load(file)
         if context.author.id in data["ids"]:
             raise UserBlacklisted

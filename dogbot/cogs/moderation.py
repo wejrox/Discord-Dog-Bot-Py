@@ -10,7 +10,7 @@ import disnake
 from disnake.ext import commands
 from disnake.ext.commands import Context
 
-from helpers import checks
+from dogbot.helpers import checks
 
 
 class Moderation(commands.Cog, name="moderation"):

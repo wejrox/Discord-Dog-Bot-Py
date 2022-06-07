@@ -12,8 +12,7 @@ import disnake
 from disnake.ext import commands
 from disnake.ext.commands import Context
 
-from file_references import blacklist_location
-from helpers import json_manager, checks
+from dogbot.helpers import json_manager, checks
 
 
 class Owner(commands.Cog, name="owner"):
@@ -74,11 +73,12 @@ class Owner(commands.Cog, name="owner"):
         Lets you add or remove a user from not being able to use the bot.
         """
         if context.invoked_subcommand is None:
-            with open(blacklist_location) as file:
+            blacklist_file = context.bot.config.blacklist_file_location
+            with open(blacklist_file) as file:
                 blacklist = json.load(file)
             embed = disnake.Embed(
                 title=f"There are currently {len(blacklist['ids'])} blacklisted IDs",
-                description=f"{', '.join(str(id) for id in blacklist['ids'])}",
+                description=f"{', '.join(str(user_id) for user_id in blacklist['ids'])}",
                 color=0x9C84EF
             )
             await context.send(embed=embed)
@@ -93,7 +93,8 @@ class Owner(commands.Cog, name="owner"):
         """
         try:
             user_id = member.id
-            with open(blacklist_location) as file:
+            blacklist_file = context.bot.config.blacklist_file_location
+            with open(blacklist_file) as file:
                 blacklist = json.load(file)
             if user_id in blacklist['ids']:
                 embed = disnake.Embed(
@@ -102,13 +103,13 @@ class Owner(commands.Cog, name="owner"):
                     color=0xE02B2B
                 )
                 return await context.send(embed=embed)
-            json_manager.add_user_to_blacklist(user_id)
+            json_manager.add_user_to_blacklist(blacklist_file, user_id)
             embed = disnake.Embed(
                 title="User Blacklisted",
                 description=f"**{member.name}** has been successfully added to the blacklist",
                 color=0x9C84EF
             )
-            with open(blacklist_location) as file:
+            with open(blacklist_file) as file:
                 blacklist = json.load(file)
             embed.set_footer(
                 text=f"There are now {len(blacklist['ids'])} users in the blacklist"
@@ -132,13 +133,14 @@ class Owner(commands.Cog, name="owner"):
         """
         try:
             user_id = member.id
-            json_manager.remove_user_from_blacklist(user_id)
+            blacklist_file = context.bot.config.blacklist_file_location
+            json_manager.remove_user_from_blacklist(blacklist_file, user_id)
             embed = disnake.Embed(
                 title="User removed from blacklist",
                 description=f"**{member.name}** has been successfully removed from the blacklist",
                 color=0x9C84EF
             )
-            with open(blacklist_location) as file:
+            with open(blacklist_file) as file:
                 blacklist = json.load(file)
             embed.set_footer(
                 text=f"There are now {len(blacklist['ids'])} users in the blacklist"

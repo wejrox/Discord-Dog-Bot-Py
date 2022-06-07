@@ -8,30 +8,32 @@ Version: 4.1
 
 import json
 
-from file_references import blacklist_location
 
-
-def add_user_to_blacklist(user_id: int) -> None:
+def add_user_to_blacklist(file_location: str, user_id: int) -> None:
     """
     This function will add a user based on its ID in the blacklist.json file.
+
+    :param file_location: Where to find the blacklist file.
     :param user_id: The ID of the user that should be added into the blacklist.json file.
     """
-    with open(blacklist_location, "r+") as file:
+    with open(file_location, "r+") as file:
         file_data = json.load(file)
         file_data["ids"].append(user_id)
-    with open(blacklist_location, "w") as file:
+    with open(file_location, "w") as file:
         file.seek(0)
         json.dump(file_data, file, indent=4)
 
 
-def remove_user_from_blacklist(user_id: int) -> None:
+def remove_user_from_blacklist(file_location: str, user_id: int) -> None:
     """
     This function will remove a user based on its ID from the blacklist.json file.
+
+    :param file_location: Where to find the blacklist file.
     :param user_id: The ID of the user that should be removed from the blacklist.json file.
     """
-    with open(blacklist_location, "r") as file:
+    with open(file_location, "r") as file:
         file_data = json.load(file)
         file_data["ids"].remove(user_id)
-    with open(blacklist_location, "w") as file:
+    with open(file_location, "w") as file:
         file.seek(0)
         json.dump(file_data, file, indent=4)
