@@ -31,6 +31,10 @@ class DogAct(BaseModel):
                                    help_text="Whether this dog act sat idle for too long and has been cancelled.")
     found_guilty: bool = BooleanField(default=False,
                                       help_text="Whether the target was found guilty of being a dog.")
+    appeal_attempted: bool = BooleanField(default=False,
+                                          help_text="Whether someone has attempted to appeal this dog act before.")
+    appeal_reason: str = CharField(default="",
+                                   help_text="If an appeal has been attempted, why it should be considered.")
 
     def set_message_id(self, message_id: int) -> None:
         """
@@ -39,7 +43,6 @@ class DogAct(BaseModel):
         :param message_id: Unique id of the Discord message that is attached to this dog act.
         """
         self.message_id = message_id
-        self.save()
 
     def add_new_yes_vote(self, author: Member) -> None:
         """
@@ -52,7 +55,6 @@ class DogAct(BaseModel):
         self.yes_votes.append(author.id)
         if len(self.yes_votes) >= self.required_votes:
             self.found_guilty = True
-        self.save()
 
     def add_new_no_vote(self, author: Member) -> None:
         """
@@ -62,20 +64,41 @@ class DogAct(BaseModel):
         """
         self._clear_votes_for_author(author.id)
         self.no_votes.append(author.id)
-        self.save()
 
     def time_out(self) -> None:
         """
         Times out the current dog act.
         """
         self.timed_out = True
+
+    def reset_voting(self) -> None:
+        """
+        Reset the voting on this dog act.
+        """
+        self.yes_votes = []
+        self.no_votes = []
+        self.found_guilty = False
+        self.timed_out = False
+
+    def begin_appeal_and_save(self, reason: str) -> None:
+        """
+        Reinitialises this dog act, marking it as an appeal and providing the reason it's being appealed.
+
+        :param reason: Why this appeal should be considered.
+        """
+        self.appeal_attempted = True
+        self.appeal_reason = reason
+
+        # An appeal attempt needs to be saved straight away, or multiple could occur at the same time!
         self.save()
 
     def vote_outcome(self) -> Union[bool, None]:
         """
         Determines whether the voting has reached a definitive outcome of Guilty or Not Guilty.
 
-        :returns: False when Not Guilty or timed out, True when Guilty, None when not enough votes have been cast.
+        :returns: False when the vote fails or timed out,
+                  True when the vote succeeds,
+                  None when not enough votes have been cast.
         """
         if len(self.no_votes) >= self.required_votes or self.timed_out:
             return False
@@ -92,7 +115,13 @@ class DogAct(BaseModel):
         """
         reporter_member = await context.guild.get_or_fetch_member(self.reporter)
         target_member = await context.guild.get_or_fetch_member(self.target)
-        return (f"Whoah there {reporter_member.mention}, that's a big claim!\n"
+
+        if self.appeal_attempted:
+            introduction = f"Someone is appealing this dog act on the grounds '{self.appeal_reason}'.\n"
+        else:
+            introduction = f"Whoah there {reporter_member.mention}, that's a big claim!\n"
+
+        return (introduction +
                 f"Who agrees that {target_member.mention} was really a :dog: for '{self.allegation}'?\n"
                 f"Votes required on one side for a verdict: {self.required_votes}\n"
                 f"Current votes: "
@@ -107,10 +136,17 @@ class DogAct(BaseModel):
         """
         reporter_member = await context.guild.get_or_fetch_member(self.reporter)
         target_member = await context.guild.get_or_fetch_member(self.target)
+
+        # If we're in the middle of an appeal, timing out isn't a good thing.
+        if self.appeal_attempted:
+            timeout_text = "Appeal denied due to lack of participation!"
+        else:
+            timeout_text = f"{target_member.mention} has been found innocent due to lack of voter participation!"
+
         if self.found_guilty:
             return f"{target_member.mention} has been found guilty of being a :dog: for '{self.allegation}'!"
         elif self.timed_out:
-            return f"{target_member.mention} has been found innocent due to lack of voter participation!"
+            return timeout_text
         else:
             return f"{target_member.mention} has been found innocent! Shame on {reporter_member.mention}"
 
@@ -130,7 +166,7 @@ class DogAct(BaseModel):
         guilty_voters: list[str] = list(map(get_voter_name, yes_voters))
         not_guilty_voters: list[str] = list(map(get_voter_name, no_voters))
 
-        return (f"Dog act finalised. "
+        return (f"Dog act {self.act_id} finalised. "
                 f"Verdict: {await self.create_outcome_message(context)}. "
                 f"Guilty voters: {guilty_voters}, Not guilty voters: {not_guilty_voters}")
 
@@ -146,7 +182,14 @@ class DogAct(BaseModel):
             verdict = "Timed Out"
         else:
             verdict = "Not Guilty"
-        return (f"**Verdict**: {verdict}"
+
+        if self.appeal_attempted and self.found_guilty:
+            appeal_text = "(appeal failed)"
+        else:
+            appeal_text = ""
+
+        return (f"**ID**: {self.act_id} {appeal_text},"
+                f" **Verdict**: {verdict}"
                 f", **Guilty votes**: {len(self.yes_votes)}"
                 f", **Not Guilty votes**: {len(self.no_votes)}"
                 f", **Allegation**: {self.allegation}")

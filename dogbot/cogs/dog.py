@@ -107,7 +107,7 @@ class Dog(commands.Cog, name="dog"):
     If enough other users agree that the target did in fact dog as outlined, the target will be branded a dog and have
     a mark added against their name.
     """
-    votes_to_complete: int = 5
+    votes_to_complete: int = 1
 
     def __init__(self, bot):
         dog_bot_database_proxy.connect()
@@ -138,6 +138,53 @@ class Dog(commands.Cog, name="dog"):
         dog_act = DogAct.create(reporter=context.author.id, target=member.id, allegation=reason,
                                 guild_id=context.guild.id, required_votes=self.votes_to_complete)
 
+        await self.vote_on_dog_act(context, dog_act)
+
+        # Save everything that's been done to this dog_act.
+        dog_act.save()
+
+        print(await dog_act.create_detailed_outcome_message(context))
+
+    @commands.command(
+        name="dogrevote",
+        description="Allows someone to request a re-vote on a specified dog act."
+    )
+    async def dog_revote(self, context: Context,
+                         act_id: int, *, reason: str = "BOO HOO!") -> None:
+        """
+        Specify an act id (use the dog history command to find the id) and reason to initiate a re-vote on a dog act's
+        outcome. Can only be performed once per dog act.
+
+        :param act_id: The dog act which you want to appeal.
+        :param context: The application command interaction.
+        :param reason: Why the appeal should be considered.
+        """
+        dog_act: DogAct = DogAct.get(DogAct.act_id == act_id)
+
+        # Only allow appeals once, unless it's the bot owner just in case are really annoyed.
+        if dog_act.appeal_attempted and context.author.id not in context.bot.config.owners:
+            embed = disnake.Embed(title="Don't you dare!",
+                                  description="An appeal can only be attempted once per dog act.")
+            await context.send(embed=embed)
+            return
+
+        dog_act.begin_appeal_and_save(reason)
+        dog_act.reset_voting()
+        await self.vote_on_dog_act(context, dog_act)
+
+        # Save everything that's been done to this dog act if we didn't time out,
+        # otherwise revert to the data before the re-vote (including the appeal being recorded).
+        if dog_act.timed_out:
+            # Reset the dog act and mark it as appeal failed.
+            dog_act = DogAct.select().where(DogAct.act_id == act_id).limit(1)
+
+        # Regardless of the outcome, save the changes.
+        dog_act.save()
+
+        print(await dog_act.create_detailed_outcome_message(context))
+
+    async def vote_on_dog_act(self, context: Context, dog_act: DogAct):
+
         # Continue waiting for user input until an outcome has been reached.
         message = None
         while dog_act.vote_outcome() is None:
@@ -162,8 +209,6 @@ class Dog(commands.Cog, name="dog"):
 
         embed = disnake.Embed(description=await dog_act.create_outcome_message(context))
         await message.edit(embed=embed, view=None)
-
-        print(await dog_act.create_detailed_outcome_message(context))
 
     @commands.command(
         name="tagdogs",
