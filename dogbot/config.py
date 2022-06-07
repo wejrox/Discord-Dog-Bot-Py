@@ -34,6 +34,11 @@ class Config:
     database_file_location: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database', 'dog_bot.db')
     """Path to the database file for storing data."""
 
+    dog_act_votes: int = 5
+    """How many votes need to be reached in either direction in order for a dog act verdict to be reached."""
+    dog_act_timeout_sec: int = 1 * 60 * 60
+    """How long in seconds for a dog act to be on trial before it is cut off due to lack of participation."""
+
     def validate(self) -> None:
         """
         Validates that this config object is usable by the bot.

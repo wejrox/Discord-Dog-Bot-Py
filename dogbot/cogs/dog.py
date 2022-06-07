@@ -21,7 +21,6 @@ class DogChoice(disnake.ui.View):
 
     def __init__(self, related_dog_act: DogAct, timeout_sec: int = 5 * 60):
         """
-
         :param related_dog_act: Dog act that is being voted on by this Dog choice.
         :param timeout_sec: Seconds to wait before this view times out and is no longer valid.
         """
@@ -107,13 +106,14 @@ class Dog(commands.Cog, name="dog"):
     If enough other users agree that the target did in fact dog as outlined, the target will be branded a dog and have
     a mark added against their name.
     """
-    votes_to_complete: int = 1
 
     def __init__(self, bot):
         dog_bot_database_proxy.connect()
         dog_bot_database_proxy.create_tables([DogAct])
         dog_bot_database_proxy.close()
-        self.bot = bot
+
+        self._votes_per_dog_act = bot.config.dog_act_votes
+        self._dog_act_timeout_sec = bot.config.dog_act_timeout_sec
 
     @commands.command(
         name="dog",
@@ -136,7 +136,7 @@ class Dog(commands.Cog, name="dog"):
 
         # Initialise the dog act, recording details about the message.
         dog_act = DogAct.create(reporter=context.author.id, target=member.id, allegation=reason,
-                                guild_id=context.guild.id, required_votes=self.votes_to_complete)
+                                guild_id=context.guild.id, required_votes=self._votes_per_dog_act)
 
         await self.vote_on_dog_act(context, dog_act)
 
@@ -192,7 +192,7 @@ class Dog(commands.Cog, name="dog"):
             embed = disnake.Embed(description=await dog_act.create_updated_dog_act_message(context),
                                   colour=0x9C84EF)
             # Timeout after an hour (1hr * 60 min * 60 sec).
-            choices = DogChoice(dog_act, timeout_sec=1 * 60 * 60)
+            choices = DogChoice(dog_act, timeout_sec=self._dog_act_timeout_sec)
 
             # Initialise the message if required, otherwise update it to match the changes made by the most recent
             # interaction.
