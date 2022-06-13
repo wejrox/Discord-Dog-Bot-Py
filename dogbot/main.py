@@ -37,10 +37,10 @@ def main(config: Config):
             try:
                 # This needs to be the location of the cog as if you were to import it.
                 bot.load_extension(f'dogbot.cogs.{command_file}')
-                print(f'Loaded extension "{command_file}"')
+                print(f'Loaded user commands from "{command_file}"')
             except Exception as e:
                 exception = f"{type(e).__name__}: {e}"
-                print(f'Failed to load extension {command_file}\n{exception}')
+                print(f'Failed to load user commands from "{command_file}"\n{exception}')
 
     # Run the bot with the token.
     bot.run(config.token)
