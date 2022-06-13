@@ -1,6 +1,7 @@
-from peewee import IntegerField, AutoField, CharField, BooleanField
+from peewee import IntegerField, AutoField, CharField, BooleanField, ForeignKeyField
 
 from dogbot.orm.models.base_model import BaseModel
+from orm.models.member import Member
 
 
 class DogAct(BaseModel):
@@ -10,10 +11,8 @@ class DogAct(BaseModel):
     id: int = AutoField()
     message_id: int = IntegerField(null=True, help_text="Unique identifier for the bot message that this relates to.")
     guild_id: int = IntegerField(help_text="Guild (discord server) that this act occurred within.")
-    # TODO Swap to a one to many relationship here. Also, create the target row in the db.
-    reporter: int = IntegerField(help_text="Who it was that filed this report against the target.")
-    # TODO Swap to a one to many relationship here. Also, create the target row in the db.
-    target: int = IntegerField(help_text="The user accused of being a dog.")
+    reporter: int = ForeignKeyField(model=Member, help_text="Who it was that filed this report against the target.")
+    target: int = ForeignKeyField(model=Member, help_text="The user accused of being a dog.")
     allegation: str = CharField(
         help_text="The reason provided by the reporter as to why they should be considered a dog.")
     required_votes: int = IntegerField(

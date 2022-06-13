@@ -138,6 +138,11 @@ class Dog(commands.Cog, name="dog"):
         """
         member = await context.guild.get_or_fetch_member(tagged_user.id)
 
+        # Initialise the users that were mentioned in this dog act. They need to already exist when we create a dog act,
+        # or we'll run into foreign key reference issues.
+        DogbotMember.get_or_create(id=context.author.id)
+        DogbotMember.get_or_create(id=member.id)
+
         # Initialise the dog act, recording details about the message.
         dog_act = DogAct.create(reporter=context.author.id, target=member.id, allegation=reason,
                                 guild_id=context.guild.id, required_votes=self._votes_per_dog_act)
