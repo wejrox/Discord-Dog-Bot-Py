@@ -2,7 +2,7 @@ import disnake
 from disnake import Member
 from disnake.ext import commands
 from disnake.ext.commands import Context
-from peewee import fn
+from peewee import fn, DoesNotExist
 
 from dogbot.orm.database import dog_bot_database_proxy
 from dogbot.orm.models.dog_act import DogAct
@@ -169,7 +169,14 @@ class Dog(commands.Cog, name="dog"):
         :param context: The application command interaction.
         :param reason: Why the appeal should be considered.
         """
-        dog_act: DogAct = DogAct.get(DogAct.id == act_id)
+        try:
+            dog_act: DogAct = DogAct.get(DogAct.id == act_id)
+        except DoesNotExist:
+            embed = disnake.Embed(title="OI!",
+                                  description="That dog act doesn't exist, ya dog!")
+            await context.send(embed=embed)
+            return
+
         dog_act_controller: DogActController = DogActController(dog_act)
 
         # Only allow appeals once, unless it's the bot owner just in case are really annoyed.
