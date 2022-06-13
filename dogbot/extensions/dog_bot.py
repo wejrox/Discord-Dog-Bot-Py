@@ -25,7 +25,8 @@ class DogBot(Bot):
 
         # We use a proxy db because we don't know where the db may be located.
         # This allows us to define the database location at runtime.
-        dog_bot_database_proxy.initialize(SqliteDatabase(config.database_file_location))
+        # We also need to enable foreign keys in our db.
+        dog_bot_database_proxy.initialize(SqliteDatabase(config.database_file_location, pragmas={'foreign_keys': 1}))
 
     @tasks.loop(minutes=1.0)
     async def status_task(self) -> None:

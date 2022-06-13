@@ -6,6 +6,9 @@ from peewee import fn
 
 from dogbot.orm.database import dog_bot_database_proxy
 from dogbot.orm.models.dog_act import DogAct
+from dogbot.orm.models.member import Member as DogbotMember
+from orm.controllers.dog_act_controller import DogActController
+from orm.models.votes import YesVote, NoVote
 
 
 class DogChoice(disnake.ui.View):
@@ -19,13 +22,13 @@ class DogChoice(disnake.ui.View):
     If there aren't enough choices by the duration of _timeout_sec then the target is presumed innocent.
     """
 
-    def __init__(self, related_dog_act: DogAct, timeout_sec: int = 5 * 60):
+    def __init__(self, dog_act_controller: DogActController, timeout_sec: int = 5 * 60):
         """
-        :param related_dog_act: Dog act that is being voted on by this Dog choice.
+        :param dog_act_controller: Dog act that is being voted on by this Dog choice.
         :param timeout_sec: Seconds to wait before this view times out and is no longer valid.
         """
         super().__init__()
-        self.dog_act = related_dog_act
+        self.dog_act_controller = dog_act_controller
         self.timeout = timeout_sec
 
     @disnake.ui.button(label="Definitely a dog", style=disnake.ButtonStyle.blurple)
@@ -38,7 +41,7 @@ class DogChoice(disnake.ui.View):
         :param _: Unused parameter for the button the user can click.
         :param interaction: Details about the interaction that occurred with the button.
         """
-        self.dog_act.add_new_yes_vote(interaction.author)
+        self.dog_act_controller.add_new_yes_vote(interaction.author.id)
 
         # When a user initiates a click, we need to do something as a result, or they never receive anything back.
         # Defer prevents them from receiving the 'Interaction failed' message.
@@ -53,8 +56,9 @@ class DogChoice(disnake.ui.View):
         :param _: Unused parameter for the button the user can click.
         :param interaction: Details about the interaction that occurred with the button.
         """
-        self.dog_act.add_new_no_vote(interaction.author)
+        self.dog_act_controller.add_new_no_vote(interaction.author.id)
 
+        # When a user initiates a click, we need to do something as a result, or they never receive anything back.
         # When a user initiates a click, we need to do something as a result, or they never receive anything back.
         # Defer prevents them from receiving the 'Interaction failed' message.
         await interaction.response.defer()
@@ -65,7 +69,7 @@ class DogChoice(disnake.ui.View):
         Overrides what to do when the view times out.
         On Timeout, the dog act is updated, and we cancel waiting.
         """
-        self.dog_act.time_out()
+        self.dog_act_controller.timed_out = True
         self.stop()
 
 
@@ -109,7 +113,7 @@ class Dog(commands.Cog, name="dog"):
 
     def __init__(self, bot):
         dog_bot_database_proxy.connect()
-        dog_bot_database_proxy.create_tables([DogAct])
+        dog_bot_database_proxy.create_tables([DogAct, DogbotMember, YesVote, NoVote])
         dog_bot_database_proxy.close()
 
         self._votes_per_dog_act = bot.config.dog_act_votes
@@ -137,13 +141,14 @@ class Dog(commands.Cog, name="dog"):
         # Initialise the dog act, recording details about the message.
         dog_act = DogAct.create(reporter=context.author.id, target=member.id, allegation=reason,
                                 guild_id=context.guild.id, required_votes=self._votes_per_dog_act)
+        dog_act_controller = DogActController(dog_act)
 
-        await self.vote_on_dog_act(context, dog_act)
+        await self.vote_on_dog_act(context, dog_act_controller)
 
         # Save everything that's been done to this dog_act.
         dog_act.save()
 
-        print(await dog_act.create_detailed_outcome_message(context))
+        print(await dog_act_controller.create_detailed_outcome_message(context))
 
     @commands.command(
         name="dogrevote",
@@ -159,7 +164,8 @@ class Dog(commands.Cog, name="dog"):
         :param context: The application command interaction.
         :param reason: Why the appeal should be considered.
         """
-        dog_act: DogAct = DogAct.get(DogAct.act_id == act_id)
+        dog_act: DogAct = DogAct.get(DogAct.id == act_id)
+        dog_act_controller: DogActController = DogActController(dog_act)
 
         # Only allow appeals once, unless it's the bot owner just in case are really annoyed.
         if dog_act.appeal_attempted and context.author.id not in context.bot.config.owners:
@@ -168,31 +174,37 @@ class Dog(commands.Cog, name="dog"):
             await context.send(embed=embed)
             return
 
-        dog_act.begin_appeal_and_save(reason)
-        dog_act.reset_voting()
-        await self.vote_on_dog_act(context, dog_act)
+        dog_act_controller.begin_appeal_and_save(reason)
+        dog_act_controller.reset_voting()
+        await self.vote_on_dog_act(context, dog_act_controller)
 
         # Save everything that's been done to this dog act if we didn't time out,
         # otherwise revert to the data before the re-vote (including the appeal being recorded).
         if dog_act.timed_out:
             # Reset the dog act and mark it as appeal failed.
-            dog_act = DogAct.select().where(DogAct.act_id == act_id).limit(1)
+            dog_act = DogAct.select().where(DogAct.id == act_id).limit(1)
 
         # Regardless of the outcome, save the changes.
         dog_act.save()
 
         print(await dog_act.create_detailed_outcome_message(context))
 
-    async def vote_on_dog_act(self, context: Context, dog_act: DogAct):
+    async def vote_on_dog_act(self, context: Context, dog_act_controller: DogActController) -> None:
+        """
+        Manages the dog act message, listening for Member interaction and updating the message as they occur.
+
+        :param context: Discord context attached to the message.
+        :param dog_act_controller: Dog act being acted upon by the user.
+        """
 
         # Continue waiting for user input until an outcome has been reached.
         message = None
-        while dog_act.vote_outcome() is None:
+        while dog_act_controller.vote_outcome() is None:
             # Set the embed to the current status of the trial.
-            embed = disnake.Embed(description=await dog_act.create_updated_dog_act_message(context),
+            embed = disnake.Embed(description=await dog_act_controller.create_updated_dog_act_message(context),
                                   colour=0x9C84EF)
             # Timeout after an hour (1hr * 60 min * 60 sec).
-            choices = DogChoice(dog_act, timeout_sec=self._dog_act_timeout_sec)
+            choices = DogChoice(dog_act_controller, timeout_sec=self._dog_act_timeout_sec)
 
             # Initialise the message if required, otherwise update it to match the changes made by the most recent
             # interaction.
@@ -200,14 +212,14 @@ class Dog(commands.Cog, name="dog"):
                 message = await context.send(embed=embed, view=choices)
 
                 # Assign the newly created message to our record for future reference.
-                dog_act.set_message_id(message.id)
+                dog_act_controller.set_message_id(message.id)
             else:
                 await message.edit(embed=embed, view=choices)
 
             # Don't do anything until another interaction occurs.
             await choices.wait()
 
-        embed = disnake.Embed(description=await dog_act.create_outcome_message(context))
+        embed = disnake.Embed(description=await dog_act_controller.create_outcome_message(context))
         await message.edit(embed=embed, view=None)
 
     @commands.command(
@@ -249,10 +261,10 @@ class Dog(commands.Cog, name="dog"):
         history: list[str] = []
         total_guilty_acts = 0
         for dog_act in DogAct.select().where(
-                (DogAct.guild_id == context.guild.id) & (DogAct.target == tagged_user.id)).group_by(
-            DogAct.target).order_by(
-            DogAct.act_id.desc()).limit(normalised_limit):
-            history.append(dog_act.create_history_summary())
+                (DogAct.guild_id == context.guild.id) & (DogAct.target == tagged_user.id)).order_by(
+            DogAct.id.desc()).limit(normalised_limit):
+            dog_act_controller = DogActController(dog_act)
+            history.append(dog_act_controller.create_history_summary())
 
             # It's fun to know how many times someone has been a dog!
             if dog_act.found_guilty:
