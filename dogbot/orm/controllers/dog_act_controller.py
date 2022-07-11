@@ -55,6 +55,12 @@ class DogActController:
         if yes_vote_count >= self.dog_act.required_votes:
             self.dog_act.found_guilty = True
 
+    def time_out(self) -> None:
+        """
+        Sets the dog act as timed out.
+        """
+        self.dog_act.timed_out = True
+
     def reset_voting(self) -> None:
         """
         Reset the voting on this dog act.

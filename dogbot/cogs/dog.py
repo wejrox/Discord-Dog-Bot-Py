@@ -59,7 +59,6 @@ class DogChoice(disnake.ui.View):
         self.dog_act_controller.add_new_no_vote(interaction.author.id)
 
         # When a user initiates a click, we need to do something as a result, or they never receive anything back.
-        # When a user initiates a click, we need to do something as a result, or they never receive anything back.
         # Defer prevents them from receiving the 'Interaction failed' message.
         await interaction.response.defer()
         self.stop()
@@ -69,7 +68,7 @@ class DogChoice(disnake.ui.View):
         Overrides what to do when the view times out.
         On Timeout, the dog act is updated, and we cancel waiting.
         """
-        self.dog_act_controller.timed_out = True
+        self.dog_act_controller.time_out()
         self.stop()
 
 
@@ -199,7 +198,7 @@ class Dog(commands.Cog, name="dog"):
         # Regardless of the outcome, save the changes.
         dog_act.save()
 
-        print(await dog_act.create_detailed_outcome_message(context))
+        print(await dog_act_controller.create_detailed_outcome_message(context))
 
     async def vote_on_dog_act(self, context: Context, dog_act_controller: DogActController) -> None:
         """
